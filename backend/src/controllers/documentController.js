@@ -33,21 +33,32 @@ exports.getDocumentById = async (req, res) => {
     const doc = await Document.findById(req.params.id);
     if (!doc) return res.status(404).json({ message: "Document not found" });
     res.json(doc);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch document" });
   }
 };
+
 // Save document content (on collaborative edit)
 exports.saveDocumentContent = async (req, res) => {
+  const docId = req.params.id;
   const { content } = req.body;
+
+  if (typeof content !== "string") {
+    return res.status(400).json({ message: "Content must be a string" });
+  }
+
   try {
-    const doc = await Document.findById(req.params.id);
-    if (!doc) return res.status(404).json({ message: "Document not found" });
+    const doc = await Document.findById(docId);
+    if (!doc) {
+      return res.status(404).json({ message: "Document not found" });
+    }
     doc.content = content;
     await doc.save();
-    res.json(doc);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+
+    res.json({ message: "Document saved successfully", content: doc.content });
+  } catch (err) {
+    console.error("Error saving document content:", err);
+    res.status(500).json({ message: "Failed to save document content" });
   }
 };
 
